@@ -1,7 +1,7 @@
 #!/bin/bash -l
 #shellcheck disable=1090,1091,2129,2035
 
-set -eo pipefail
+set -exo pipefail
 
 CWDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "${CWDIR}/common.bash"
