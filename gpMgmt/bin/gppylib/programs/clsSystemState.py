@@ -12,7 +12,6 @@ import re
 import collections
 import pgdb
 from contextlib import closing
-
 from gppylib import gparray, gplog
 from gppylib.commands import base, gp
 from gppylib.db import dbconn
@@ -23,6 +22,7 @@ from gppylib.operations.buildMirrorSegments import get_recovery_progress_file, g
 from gppylib.system import configurationInterface as configInterface
 from gppylib.system.environment import GpCoordinatorEnvironment
 from gppylib.utils import TableLogger
+from gppylib.commands.gp import get_coordinatordatadir
 
 logger = gplog.get_default_logger()
 
@@ -684,7 +684,9 @@ class GpSystemStateProgram:
 
         recovery_progress_file = get_recovery_progress_file(gplog)
         recovery_progress_segs = self._parse_recovery_progress_data(data, recovery_progress_file, gpArray)
-        if recovery_progress_segs:
+        coordinator_data_directory = get_coordinatordatadir()
+        gprecoverseg_lock_file = os.path.exists(coordinator_data_directory + '/gprecoverseg.lock')
+        if recovery_progress_segs and gprecoverseg_lock_file:
             logger.info("----------------------------------------------------")
             logger.info("Segments in recovery")
             logSegments(recovery_progress_segs, False, [VALUE_RECOVERY_TYPE, VALUE_RECOVERY_COMPLETED_BYTES, VALUE_RECOVERY_TOTAL_BYTES,
@@ -992,7 +994,6 @@ class GpSystemStateProgram:
                 data.addValue(VALUE_RECOVERY_PERCENTAGE, percentage)
 
         return recovery_progress_segs
-
 
     @staticmethod
     def _get_unsync_segs_add_wal_remaining_bytes(data, gpArray):
