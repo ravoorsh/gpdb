@@ -405,7 +405,7 @@ Feature: gprecoverseg tests
     And user can start transactions
     And all files in gpAdminLogs directory are deleted on all hosts in the cluster
     And a sample recovery_progress.file is created from saved lines
-    Then a sample gprecoverseg.lock file is created in coordinator_data_directory
+    Then a sample gprecoverseg.lock directory is created in coordinator_data_directory
     When the user runs "gpstate -e"
     Then gpstate should print "Segments in recovery" to stdout
 #    And gpstate output contains "incremental,incremental,incremental" entries for mirrors of content 0,1,2
@@ -431,7 +431,7 @@ Feature: gprecoverseg tests
     And user can start transactions
 
     And a sample recovery_progress.file is created from saved lines
-    Then a sample gprecoverseg.lock file is created in coordinator_data_directory
+    Then a sample gprecoverseg.lock directory is created in coordinator_data_directory
     When the user runs "gpstate -e"
     Then gpstate should print "Segments in recovery" to stdout
     And all files in gpAdminLogs directory are deleted on all hosts in the cluster
@@ -516,12 +516,12 @@ Feature: gprecoverseg tests
     And the user suspend the walsender on the primary on content 0
     When the user asynchronously runs "gprecoverseg -aF" and the process is saved
     Then the user waits until recovery_progress.file is created in gpAdminLogs and verifies its format
-    Then the user waits until gprecoverseg.lock file is created in coordinator_data_directory
+    Then verify if the gprecoverseg.lock directory is present in coordinator_data_directory
     When the user asynchronously sets up to end gprecoverseg process with SIGINT
     And the user waits until saved async process is completed
     Then recovery_progress.file should not exist in gpAdminLogs
     Then the user reset the walsender on the primary on content 0
-    And the gprecoverseg lock directory is removed
+    Then gprecoverseg.lock in coordinator_data_directory directory is deleted
     And the user waits until mirror on content 0,1,2 is up
     And verify that lines from recovery_progress.file are present in segment progress files in gpAdminLogs
     And the cluster is rebalanced
@@ -539,12 +539,12 @@ Feature: gprecoverseg tests
     And the user suspend the walsender on the primary on content 0
     When the user asynchronously runs "gprecoverseg -aF" and the process is saved
     Then the user waits until recovery_progress.file is created in gpAdminLogs and verifies its format
-    Then the user waits until gprecoverseg.lock file is created in coordinator_data_directory
+    Then verify if the gprecoverseg.lock directory is present in coordinator_data_directory
     When the user runs "gpstate -e"
     Then gpstate should print "Segments in recovery" to stdout
     When the user asynchronously sets up to end gprecoverseg process with SIGHUP
     And the user waits until saved async process is completed
-    Then the gprecoverseg lock directory is removed
+    Then the gprecoverseg.lock in coordinator_data_directory directory is deleted
     When the user runs "gpstate -e"
     Then gpstate should not print "Segments in recovery" to stdout
     Then the user reset the walsender on the primary on content 0

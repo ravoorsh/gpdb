@@ -160,7 +160,7 @@ Feature: gpstate tests
         Given a standard local demo cluster is running
         Given all files in gpAdminLogs directory are deleted
         And a sample recovery_progress.file is created with ongoing recoveries in gpAdminLogs
-        And a sample gprecoverseg.lock file is created in coordinator_data_directory
+        And a sample gprecoverseg.lock directory is created in coordinator_data_directory
         When the user runs "gpstate -e"
         Then gpstate should print "Segments in recovery" to stdout
         And gpstate output contains "full,incremental" entries for mirrors of content 0,1
@@ -175,7 +175,7 @@ Feature: gpstate tests
         Given a standard local demo cluster is running
         Given all files in gpAdminLogs directory are deleted
         And a sample recovery_progress.file is created with completed recoveries in gpAdminLogs
-        And a sample gprecoverseg.lock file is created in coordinator_data_directory
+        And a sample gprecoverseg.lock directory is created in coordinator_data_directory
         When the user runs "gpstate -e"
         Then gpstate should print "Segments in recovery" to stdout
         And gpstate output contains "full" entries for mirrors of content 1

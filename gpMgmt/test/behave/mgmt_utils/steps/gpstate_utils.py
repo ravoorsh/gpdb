@@ -18,12 +18,11 @@ def impl(context):
         fp.write("full:5: 1164848/1371715 kB (84%), 0/1 tablespace (...t1/demoDataDir0/base/16384/40962)\n")
         fp.write("incremental:6: 1/1371875 kB (1%)")
 
-@Then('a sample gprecoverseg.lock file is created in coordinator_data_directory')
-@given('a sample gprecoverseg.lock file is created in coordinator_data_directory')
+@then('a sample gprecoverseg.lock directory is created in coordinator_data_directory')
+@given('a sample gprecoverseg.lock directory is created in coordinator_data_directory')
 def impl(context):
     gprecoverseg_lock_file = "%s/gprecoverseg.lock" % get_coordinatordatadir()
-    open(gprecoverseg_lock_file, "x")
-    if os.path.exists(gprecoverseg_lock_file):
+    with open(gprecoverseg_lock_file, "x"):
         return
 
 @given('a sample recovery_progress.file is created with completed recoveries in gpAdminLogs')

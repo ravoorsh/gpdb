@@ -444,10 +444,12 @@ def impl(context, logdir):
         if attempt == num_retries:
             raise Exception('Timed out after {} retries'.format(num_retries))
 
-@then( 'the user waits until gprecoverseg.lock file is created in coordinator_data_directory')
+@then( 'verify if the gprecoverseg.lock directory is present in coordinator_data_directory')
 def impl(context):
     gprecoverseg_lock_file = "%s/gprecoverseg.lock" % gp.get_coordinatordatadir()
-    if os.path.exists(gprecoverseg_lock_file):
+    if not os.path.exists(gprecoverseg_lock_file):
+        raise Exception('gprecoverseg.lock directory does not exist')
+    else:
         return
 
 @then('verify that lines from recovery_progress.file are present in segment progress files in {logdir}')
