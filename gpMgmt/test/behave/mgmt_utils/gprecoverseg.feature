@@ -880,7 +880,7 @@ Feature: gprecoverseg tests
           And the user asynchronously sets up to end gprecoverseg process when "Recovery type" is printed in the logs
           And the user runs "gprecoverseg -a"
          Then gprecoverseg should return a return code of -15
-          And the gprecoverseg lock directory is removed
+         Then gprecoverseg.lock in coordinator_data_directory directory is deleted
 
          When the user runs "gprecoverseg -a"
          Then gprecoverseg should return a return code of 0
