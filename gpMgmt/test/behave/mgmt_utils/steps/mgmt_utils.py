@@ -2580,11 +2580,6 @@ def impl(context):
     for file in files_found:
         os.remove(file)
 
-@then('gprecoverseg.lock in coordinator_data_directory directory is deleted')
-def impl(context):
-    gprecoverseg_lock_file = "%s/gprecoverseg.lock" % get_coordinatordatadir()
-    if os.path.exists(gprecoverseg_lock_file):
-        os.remove(gprecoverseg_lock_file)
 
 @given('all files in gpAdminLogs directory are deleted on hosts {hosts}')
 def impl(context, hosts):

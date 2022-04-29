@@ -169,7 +169,7 @@ Feature: gpstate tests
             | \S+     | [0-9]+ | full           | 1164848                | 1371715            | 84%                  |
             | \S+     | [0-9]+ | incremental    | 1                      | 1371875            | 1%                   |
         And all files in gpAdminLogs directory are deleted
-        Then gprecoverseg.lock in coordinator_data_directory directory is deleted
+        And the gprecoverseg lock directory is removed
 
     Scenario: gpstate -e does not show information about segments with completed recovery
         Given a standard local demo cluster is running
@@ -185,7 +185,7 @@ Feature: gpstate tests
         And gpstate should not print "incremental" to stdout
         And gpstate should not print "All segments are running normally" to stdout
         And all files in gpAdminLogs directory are deleted
-        Then gprecoverseg.lock in coordinator_data_directory directory is deleted
+        Then the gprecoverseg lock directory is removed
 
     Scenario: gpstate -c logs cluster info for a mirrored cluster
         Given a standard local demo cluster is running

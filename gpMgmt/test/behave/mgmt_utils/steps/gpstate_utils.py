@@ -21,9 +21,8 @@ def impl(context):
 @then('a sample gprecoverseg.lock directory is created in coordinator_data_directory')
 @given('a sample gprecoverseg.lock directory is created in coordinator_data_directory')
 def impl(context):
-    gprecoverseg_lock_file = "%s/gprecoverseg.lock" % get_coordinatordatadir()
-    with open(gprecoverseg_lock_file, "x"):
-        return
+    gprecoverseg_lock_dir = os.path.join(get_coordinatordatadir() + '/gprecoverseg.lock')
+    os.mkdir(gprecoverseg_lock_dir)
 
 @given('a sample recovery_progress.file is created with completed recoveries in gpAdminLogs')
 def impl(context):
