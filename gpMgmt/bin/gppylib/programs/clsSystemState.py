@@ -24,6 +24,7 @@ from gppylib.operations.buildMirrorSegments import get_recovery_progress_file, g
 from gppylib.system import configurationInterface as configInterface
 from gppylib.system.environment import GpMasterEnvironment
 from gppylib.utils import TableLogger
+from gppylib.commands.gp import get_masterdatadir
 
 logger = gplog.get_default_logger()
 
@@ -448,9 +449,9 @@ class GpSystemStateProgram:
         Log information about the configured standby and its current status
         """
         if standby is None:
-            tabLog.info(["Master standby", "= No master standby configured"])
+            tabLog.info(["Coordinator standby", "= No coordinator standby configured"])
         else:
-            tabLog.info(["Master standby", "= %s" % standby.getSegmentHostName()])
+            tabLog.info(["Coordinator standby", "= %s" % standby.getSegmentHostName()])
 
             (standbyStatusFetchWarning, outputFromStandbyCmd) = hostNameToResults[standby.getSegmentHostName()]
             standbyData = outputFromStandbyCmd[standby.getSegmentDbId()] if standbyStatusFetchWarning is None else None
@@ -684,11 +685,12 @@ class GpSystemStateProgram:
         self.__addClusterDownWarning(gpArray, data)
 
         recovery_progress_file = get_recovery_progress_file(gplog)
-        recovery_progress_segs = self._parse_recovery_progress_data(data, recovery_progress_file, gpArray)
-        if recovery_progress_segs:
+        segments_under_recovery = self._parse_recovery_progress_data(data, recovery_progress_file, gpArray)
+        gprecoverseg_lock_dir = os.path.join(get_coordinatordatadir() + '/gprecoverseg.lock')
+        if segments_under_recovery and os.path.exists(gprecoverseg_lock_dir):
             logger.info("----------------------------------------------------")
             logger.info("Segments in recovery")
-            logSegments(recovery_progress_segs, False, [VALUE_RECOVERY_TYPE, VALUE_RECOVERY_COMPLETED_BYTES, VALUE_RECOVERY_TOTAL_BYTES,
+            logSegments(segments_under_recovery, False, [VALUE_RECOVERY_TYPE, VALUE_RECOVERY_COMPLETED_BYTES, VALUE_RECOVERY_TOTAL_BYTES,
                                                           VALUE_RECOVERY_PERCENTAGE])
             exitCode = 1
 
