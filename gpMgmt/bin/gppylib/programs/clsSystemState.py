@@ -25,6 +25,7 @@ from gppylib.system import configurationInterface as configInterface
 from gppylib.system.environment import GpMasterEnvironment
 from gppylib.utils import TableLogger
 
+
 logger = gplog.get_default_logger()
 
 class FieldDefinition:
@@ -684,11 +685,12 @@ class GpSystemStateProgram:
         self.__addClusterDownWarning(gpArray, data)
 
         recovery_progress_file = get_recovery_progress_file(gplog)
-        recovery_progress_segs = self._parse_recovery_progress_data(data, recovery_progress_file, gpArray)
-        if recovery_progress_segs:
+        segments_under_recovery = self._parse_recovery_progress_data(data, recovery_progress_file, gpArray)
+        gprecoverseg_lock_dir = os.path.join(gpEnv.getMasterDataDir() + '/gprecoverseg.lock')
+        if segments_under_recovery and os.path.exists(gprecoverseg_lock_dir):
             logger.info("----------------------------------------------------")
             logger.info("Segments in recovery")
-            logSegments(recovery_progress_segs, False, [VALUE_RECOVERY_TYPE, VALUE_RECOVERY_COMPLETED_BYTES, VALUE_RECOVERY_TOTAL_BYTES,
+            logSegments(segments_under_recovery, False, [VALUE_RECOVERY_TYPE, VALUE_RECOVERY_COMPLETED_BYTES, VALUE_RECOVERY_TOTAL_BYTES,
                                                           VALUE_RECOVERY_PERCENTAGE])
             exitCode = 1
 
@@ -993,7 +995,6 @@ class GpSystemStateProgram:
                 data.addValue(VALUE_RECOVERY_PERCENTAGE, percentage)
 
         return recovery_progress_segs
-
 
     @staticmethod
     def _get_unsync_segs_add_wal_remaining_bytes(data, gpArray):

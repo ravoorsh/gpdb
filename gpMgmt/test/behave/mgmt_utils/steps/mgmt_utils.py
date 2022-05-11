@@ -38,6 +38,7 @@ from test.behave_utils.cluster_expand import Gpexpand
 from test.behave_utils.gpexpand_dml import TestDML
 from gppylib.commands.base import Command, REMOTE
 from gppylib import pgconf
+from gppylib.operations.package import linux_distribution_id, linux_distribution_version
 
 
 master_data_dir = os.environ.get('MASTER_DATA_DIRECTORY')
@@ -449,6 +450,13 @@ def impl(context, logdir):
         if attempt == num_retries:
             raise Exception('Timed out after {} retries'.format(num_retries))
 
+@then( 'verify if the gprecoverseg.lock directory is present in master_data_directory')
+def impl(context):
+    gprecoverseg_lock_dir = "%s/gprecoverseg.lock" % master_data_dir
+    if not os.path.exists(gprecoverseg_lock_dir):
+        raise Exception('gprecoverseg.lock directory does not exist')
+    else:
+        return
 
 @then('verify that lines from recovery_progress.file are present in segment progress files in {logdir}')
 def impl(context, logdir):
@@ -615,6 +623,11 @@ def impl(context, kill_process_name, log_msg, logfile_name):
 @when('the user asynchronously sets up to end {process_name} process with SIGINT')
 def impl(context, process_name):
     command = "ps ux | grep bin/%s | awk '{print $2}' | xargs kill -2" % (process_name)
+    run_async_command(context, command)
+
+@when('the user asynchronously sets up to end {process_name} process with SIGHUP')
+def impl(context, process_name):
+    command = "ps ux | grep bin/%s | awk '{print $2}' | xargs kill -9" % (process_name)
     run_async_command(context, command)
 
 @when('the user asynchronously sets up to end gpcreateseg process when it starts')
@@ -2620,6 +2633,7 @@ def impl(context):
     files_found = glob.glob('%s/*' % (log_dir))
     for file in files_found:
         os.remove(file)
+
 
 @given('all files in gpAdminLogs directory are deleted on hosts {hosts}')
 def impl(context, hosts):
