@@ -38,7 +38,6 @@ from test.behave_utils.cluster_expand import Gpexpand
 from test.behave_utils.gpexpand_dml import TestDML
 from gppylib.commands.base import Command, REMOTE
 from gppylib import pgconf
-from gppylib.operations.package import linux_distribution_id, linux_distribution_version
 
 
 master_data_dir = os.environ.get('MASTER_DATA_DIRECTORY')

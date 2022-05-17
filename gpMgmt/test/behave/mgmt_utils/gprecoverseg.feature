@@ -404,7 +404,7 @@ Feature: gprecoverseg tests
     And user can start transactions
     And all files in gpAdminLogs directory are deleted on all hosts in the cluster
     And a sample recovery_progress.file is created from saved lines
-    Then a sample gprecoverseg\.lock directory is created in master_data_directory
+    Then a sample gprecoverseg.lock directory is created in master_data_directory
     When the user runs "gpstate -e"
     Then gpstate should print "Segments in recovery" to stdout
 #    And gpstate output contains "incremental,incremental,incremental" entries for mirrors of content 0,1,2
