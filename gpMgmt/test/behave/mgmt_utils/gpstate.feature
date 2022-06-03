@@ -158,34 +158,24 @@ Feature: gpstate tests
 
     Scenario: gpstate -e shows information about segments with ongoing recovery
         Given a standard local demo cluster is running
-        Given all files in gpAdminLogs directory are deleted
-        And a sample recovery_progress.file is created with ongoing recoveries in gpAdminLogs
-        And a sample gprecoverseg.lock directory is created in coordinator_data_directory
+        And the segments are synchronized
+        And all files in gpAdminLogs directory are deleted on all hosts in the cluster
+        And user immediately stops all primary processes for content 0,1,2
+        And user can start transactions
+        And sql "DROP TABLE IF EXISTS test_recoverseg; CREATE TABLE test_recoverseg AS SELECT generate_series(1,100000000) AS a;" is executed in "postgres" db
+        And the user suspend the walsender on the primary on content 0
+        When the user asynchronously runs "gprecoverseg -aF" and the process is saved
+        Then the user waits until recovery_progress.file is created in gpAdminLogs and verifies its format
+        Then verify if the gprecoverseg.lock directory is present in coordinator_data_directory
         When the user runs "gpstate -e"
         Then gpstate should print "Segments in recovery" to stdout
-        And gpstate output contains "full,incremental" entries for mirrors of content 0,1
-        And gpstate output looks like
-            | Segment | Port   | Recovery type  | Completed bytes \(kB\) | Total bytes \(kB\) | Percentage completed |
-            | \S+     | [0-9]+ | full           | 1164848                | 1371715            | 84%                  |
-            | \S+     | [0-9]+ | incremental    | 1                      | 1371875            | 1%                   |
+        Then the user reset the walsender on the primary on content 0
+        And the user waits until saved async process is completed
+        Then recovery_progress.file should not exist in gpAdminLogs
         And all files in gpAdminLogs directory are deleted
         And the gprecoverseg lock directory is removed
-
-    Scenario: gpstate -e does not show information about segments with completed recovery
-        Given a standard local demo cluster is running
-        Given all files in gpAdminLogs directory are deleted
-        And a sample recovery_progress.file is created with completed recoveries in gpAdminLogs
-        And a sample gprecoverseg.lock directory is created in coordinator_data_directory
-        When the user runs "gpstate -e"
-        Then gpstate should print "Segments in recovery" to stdout
-        And gpstate output contains "full" entries for mirrors of content 1
-        And gpstate output looks like
-            | Segment | Port   | Recovery type  | Completed bytes \(kB\) | Total bytes \(kB\) | Percentage completed |
-            | \S+     | [0-9]+ | full           | 1164848                | 1371715            | 84%                  |
-        And gpstate should not print "incremental" to stdout
-        And gpstate should not print "All segments are running normally" to stdout
-        And all files in gpAdminLogs directory are deleted
-        Then the gprecoverseg lock directory is removed
+        And the user waits until mirror on content 0,1,2 is up
+        And user can start transactions
 
     Scenario: gpstate -c logs cluster info for a mirrored cluster
         Given a standard local demo cluster is running

@@ -12,24 +12,11 @@ def impl(context):
     with open('{}/gpAdminLogs/recovery_progress.file'.format(os.path.expanduser("~")), 'w+') as fp:
         fp.writelines(context.recovery_lines)
 
-@given('a sample recovery_progress.file is created with ongoing recoveries in gpAdminLogs')
-def impl(context):
-    with open('{}/gpAdminLogs/recovery_progress.file'.format(os.path.expanduser("~")), 'w+') as fp:
-        fp.write("full:5: 1164848/1371715 kB (84%), 0/1 tablespace (...t1/demoDataDir0/base/16384/40962)\n")
-        fp.write("incremental:6: 1/1371875 kB (1%)")
-
 @then('a sample gprecoverseg.lock directory is created in coordinator_data_directory')
 @given('a sample gprecoverseg.lock directory is created in coordinator_data_directory')
 def impl(context):
     gprecoverseg_lock_dir = os.path.join(get_coordinatordatadir() + '/gprecoverseg.lock')
     os.mkdir(gprecoverseg_lock_dir)
-
-@given('a sample recovery_progress.file is created with completed recoveries in gpAdminLogs')
-def impl(context):
-    with open('{}/gpAdminLogs/recovery_progress.file'.format(os.path.expanduser("~")), 'w+') as fp:
-        fp.write("incremental:5: pg_rewind: Done!\n")
-        fp.write("full:6: 1164848/1371715 kB (84%), 0/1 tablespace (...t1/demoDataDir0/base/16384/40962)\n")
-        fp.write("full:7: pg_basebackup: completed")
 
 @then('gpstate output looks like')
 def impl(context):
@@ -115,3 +102,17 @@ def check_stdout_msg_in_order(context, msg):
         raise Exception(err_str)
 
     context.stdout_position = match.end()
+
+@then("a sample recovery_progress.file is created with completed recoveries in gpAdminLogs")
+def impl(context):
+    with open('{}/gpAdminLogs/recovery_progress.file'.format(os.path.expanduser("~")), 'w+') as fp:
+        fp.write("incremental:5: pg_rewind: Done!\n")
+        fp.write("full:6: 1164848/1371715 kB (84%), 0/1 tablespace (...t1/demoDataDir0/base/16384/40962)\n")
+        fp.write("full:7: pg_basebackup: completed")
+
+
+@then("a sample recovery_progress.file is created with ongoing recoveries in gpAdminLogs")
+def impl(context):
+    with open('{}/gpAdminLogs/recovery_progress.file'.format(os.path.expanduser("~")), 'w+') as fp:
+        fp.write("full:5: 1164848/1371715 kB (84%), 0/1 tablespace (...t1/demoDataDir0/base/16384/40962)\n")
+        fp.write("incremental:6: 1/1371875 kB (1%)")

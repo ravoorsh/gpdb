@@ -13,6 +13,8 @@ from gppylib.mainUtils import *
 from gppylib.programs.clsSystemState import *
 
 #-------------------------------------------------------------------------
+from gpMgmt.bin.gppylib.programs.clsSystemState import GpSystemStateProgram
+
 if __name__ == '__main__':
     options = {}
     options["programNameOverride"] = "gpstate" # for now since we are invoked from the real gpstate

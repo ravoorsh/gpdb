@@ -609,3 +609,4 @@ def impl(context, expected_additional_entries):
     if actual_backout_entries != expected_total_entries:
         raise Exception("Expected configuration history table to have {} backout entries, found {}".format(
             context.original_config_history_backout_count + expected_additional_entries, actual_backout_entries))
+
