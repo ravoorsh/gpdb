@@ -24,7 +24,6 @@ from gppylib.system import configurationInterface as configInterface
 from gppylib.system.environment import GpCoordinatorEnvironment
 from gppylib.utils import TableLogger
 from gppylib.commands.gp import get_coordinatordatadir
-from gppylib.commands.gp import *
 import subprocess
 
 
