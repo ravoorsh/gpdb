@@ -688,7 +688,7 @@ class GpSystemStateProgram:
         recovery_progress_file = get_recovery_progress_file(gplog)
         segments_under_recovery = self._parse_recovery_progress_data(data, recovery_progress_file, gpArray)
         gprecoverseg_lock_dir = os.path.join(get_coordinatordatadir() + '/gprecoverseg.lock')
-        if segments_under_recovery and os.path.exists(gprecoverseg_lock_dir) and isProcessRunning('gprecoverseg') == 0:
+        if segments_under_recovery and os.path.exists(gprecoverseg_lock_dir) and isProcessRunning('gprecoverseg'):
             logger.info("----------------------------------------------------")
             logger.info("Segments in recovery")
             logSegments(segments_under_recovery, False, [VALUE_RECOVERY_TYPE, VALUE_RECOVERY_COMPLETED_BYTES, VALUE_RECOVERY_TOTAL_BYTES,
@@ -996,14 +996,6 @@ class GpSystemStateProgram:
                 data.addValue(VALUE_RECOVERY_PERCENTAGE, percentage)
 
         return recovery_progress_segs
-
-    @staticmethod
-    def _check_process(process):
-        is_running = subprocess.call(["pgrep", "-f", process], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        if is_running == 0:
-            return True
-        else:
-            return False
 
     @staticmethod
     def _get_unsync_segs_add_wal_remaining_bytes(data, gpArray):

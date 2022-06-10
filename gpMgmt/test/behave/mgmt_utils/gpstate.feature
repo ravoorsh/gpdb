@@ -181,6 +181,17 @@ Feature: gpstate tests
         And the user waits until mirror on content 0 is up
         And user can start transactions
 
+    Scenario: gpstate -e fails to show information about ongoing recovery when gprecoverseg process is not running
+        Given a standard local demo cluster is running
+        And the segments are synchronized
+        And all files in gpAdminLogs directory are deleted on all hosts in the cluster
+        Then a sample recovery_progress.file is created with ongoing recoveries in gpAdminLogs
+        Then a sample gprecoverseg.lock directory is created in coordinator_data_directory
+        When the user runs "gpstate -e"
+        Then gpstate should not print "Segments in recovery" to stdout
+        And all files in gpAdminLogs directory are deleted
+        And the gprecoverseg lock directory is removed
+
     Scenario: gpstate -c logs cluster info for a mirrored cluster
         Given a standard local demo cluster is running
         When the user runs "gpstate -c"

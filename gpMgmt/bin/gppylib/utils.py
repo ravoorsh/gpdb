@@ -513,7 +513,8 @@ def escapeArrayElement(query_str):
     return pgdb.escape_string(query_str.encode(errors='backslashreplace')).decode(errors='backslashreplace').replace('\\','\\\\').replace('"','\\"')
 
 def isProcessRunning(process):
-    return subprocess.call(["pgrep", "-f", process], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    is_running = subprocess.call(["pgrep", "-f", process], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return is_running == 0
 
 # Transform Python list to Postgres array literal (of the form: '{...}')
 def format_array_literal(val):
