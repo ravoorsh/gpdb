@@ -24,7 +24,7 @@ from gppylib.system import configurationInterface as configInterface
 from gppylib.system.environment import GpCoordinatorEnvironment
 from gppylib.utils import TableLogger
 from gppylib.commands.gp import get_coordinatordatadir
-from gppylib.utils import isProcessRunning
+from gppylib.commands.base import Command
 
 
 logger = gplog.get_default_logger()
@@ -958,6 +958,40 @@ class GpSystemStateProgram:
             logger.warn("*****************************************************" )
 
         return 1 if hasWarnings else 0
+
+    @staticmethod
+    def _isGprecoversegRunning(process):
+        """
+        helper function for checking if gprecoverseg prcess is running
+        :param process: gprecoverseg
+        returns true if gprecoverseg process-id matches the pid in the gprecoverseg.lock/PID file
+        false otherwise
+        """
+
+        if process != 'gprecoverseg':
+            return False
+
+        cmd = Command(name='pgrep -f for %s' % process,
+                      cmdStr="pgrep -f %s" % process)
+        cmd.run()
+        if cmd.get_return_code() > 1:
+            logger.warning("__isGprecoversegRunning: Unexpected problem with pgrep, return code: %s"
+                           % cmd.get_return_code())
+            return False
+
+        gprecoverseg_pid = cmd.get_stdout(True)
+        pid_file_path = os.path.join(get_coordinatordatadir() + '/gprecoverseg.lock' + '/PID')
+        if not os.path.exists(pid_file_path):
+            return False
+
+        pid_file = open(pid_file_path, 'r')
+        pid = pid_file.readline()
+        pid_file.close()
+
+        # PID file in gprecoverseg.lock directory will contain the pid of the gprecoverseg process.
+        # Compare this pid with the pid of gprecoverseg obtained from pgrep.
+        # return true if both the pids match.
+        return gprecoverseg_pid == pid
 
     @staticmethod
     def _parse_recovery_progress_data(data, recovery_progress_file, gpArray):

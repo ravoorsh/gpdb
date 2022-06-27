@@ -1,3 +1,4 @@
+import builtins
 import unittest
 import mock
 import pgdb
@@ -39,6 +40,28 @@ def create_mirror(**kwargs):
     """Like create_segment() but with the role overridden to ROLE_MIRROR."""
     kwargs['role'] = gparray.ROLE_MIRROR
     return create_segment(**kwargs)
+
+class IsGprecoversegRunningTestCase(GpTestCase):
+
+    def test_isGprecoversegRunning_invalid_process(self):
+        expected = False
+        actual = GpSystemStateProgram._isGprecoversegRunning('invalid_process')
+        self.assertEqual(actual, expected)
+
+    @mock.patch('gppylib.commands.base.Command', return_value=1234)
+    @mock.patch('os.path.exists', return_value=False)
+    def test_isGprecoversegRunning_PID_no_exist(self, mock1, mock2):
+        expected = False
+        actual = GpSystemStateProgram._isGprecoversegRunning('gprecoverseg')
+        self.assertEqual(actual, expected)
+
+    @mock.patch('gppylib.commands.base.Command', return_value=1234)
+    @mock.patch('os.path.exists', return_value=True)
+    @mock.patch.object(builtins, "open", new_callable=mock.mock_open, read_data="0")
+    def test_isGprecoversegRunning_PID_not_matching(self, mock1,mock2, mock3):
+        expected = False
+        actual = GpSystemStateProgram._isGprecoversegRunning('gprecoverseg')
+        self.assertEqual(actual, expected)
 
 class RecoveryProgressTestCase(unittest.TestCase):
     """

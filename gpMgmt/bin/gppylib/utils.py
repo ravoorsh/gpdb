@@ -8,7 +8,7 @@ from xml.dom import Node
 
 import pgdb
 from gppylib.gplog import *
-import subprocess
+
 logger = get_default_logger()
 
 _debug=0
@@ -511,10 +511,6 @@ def Escape(query_str):
 def escapeArrayElement(query_str):
     # also escape backslashes and double quotes, in addition to the doubling of single quotes
     return pgdb.escape_string(query_str.encode(errors='backslashreplace')).decode(errors='backslashreplace').replace('\\','\\\\').replace('"','\\"')
-
-def isProcessRunning(process):
-    is_running = subprocess.call(["pgrep", "-f", process], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    return is_running == 0
 
 # Transform Python list to Postgres array literal (of the form: '{...}')
 def format_array_literal(val):
