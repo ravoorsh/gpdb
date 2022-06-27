@@ -688,7 +688,7 @@ class GpSystemStateProgram:
         recovery_progress_file = get_recovery_progress_file(gplog)
         segments_under_recovery = self._parse_recovery_progress_data(data, recovery_progress_file, gpArray)
         gprecoverseg_lock_dir = os.path.join(get_coordinatordatadir() + '/gprecoverseg.lock')
-        if segments_under_recovery and os.path.exists(gprecoverseg_lock_dir) and isProcessRunning('gprecoverseg'):
+        if segments_under_recovery and os.path.exists(gprecoverseg_lock_dir) and self._isGprecoversegRunning('gprecoverseg'):
             logger.info("----------------------------------------------------")
             logger.info("Segments in recovery")
             logSegments(segments_under_recovery, False, [VALUE_RECOVERY_TYPE, VALUE_RECOVERY_COMPLETED_BYTES, VALUE_RECOVERY_TOTAL_BYTES,
