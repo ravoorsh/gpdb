@@ -43,24 +43,28 @@ def create_mirror(**kwargs):
 
 class IsGprecoversegRunningTestCase(GpTestCase):
 
-    def test_isGprecoversegRunning_invalid_process(self):
-        expected = False
-        actual = GpSystemStateProgram._isGprecoversegRunning('invalid_process')
-        self.assertEqual(actual, expected)
-
-    @mock.patch('gppylib.commands.base.Command', return_value=1234)
     @mock.patch('os.path.exists', return_value=False)
-    def test_isGprecoversegRunning_PID_no_exist(self, mock1, mock2):
+    def test_isGprecoversegRunning_pid_file_does_not_exist(self, mock1):
         expected = False
-        actual = GpSystemStateProgram._isGprecoversegRunning('gprecoverseg')
+        actual = GpSystemStateProgram._isGprecoversegRunning()
         self.assertEqual(actual, expected)
 
-    @mock.patch('gppylib.commands.base.Command', return_value=1234)
+    @mock.patch('gppylib.commands.base.Command.run')
+    @mock.patch('gppylib.commands.base.Command.get_return_code', return_value=0)
     @mock.patch('os.path.exists', return_value=True)
     @mock.patch.object(builtins, "open", new_callable=mock.mock_open, read_data="0")
-    def test_isGprecoversegRunning_PID_not_matching(self, mock1,mock2, mock3):
-        expected = False
-        actual = GpSystemStateProgram._isGprecoversegRunning('gprecoverseg')
+    def test_isGprecoversegRunning_process_no_exist(self, mock1, mock2, mock3, mock4):
+        expected = True
+        actual = GpSystemStateProgram._isGprecoversegRunning()
+        self.assertEqual(actual, expected)
+
+    @mock.patch('gppylib.commands.base.Command.run')
+    @mock.patch('gppylib.commands.base.Command.get_return_code', return_value=0)
+    @mock.patch('os.path.exists', return_value=True)
+    @mock.patch.object(builtins, "open", new_callable=mock.mock_open, read_data="1234")
+    def test_isGprecoversegRunning_pid_matching(self, mock1, mock2, mock3, mock4):
+        expected = True
+        actual = GpSystemStateProgram._isGprecoversegRunning()
         self.assertEqual(actual, expected)
 
 class RecoveryProgressTestCase(unittest.TestCase):

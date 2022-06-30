@@ -688,7 +688,7 @@ class GpSystemStateProgram:
         recovery_progress_file = get_recovery_progress_file(gplog)
         segments_under_recovery = self._parse_recovery_progress_data(data, recovery_progress_file, gpArray)
         gprecoverseg_lock_dir = os.path.join(get_coordinatordatadir() + '/gprecoverseg.lock')
-        if segments_under_recovery and os.path.exists(gprecoverseg_lock_dir) and self._isGprecoversegRunning('gprecoverseg'):
+        if segments_under_recovery and os.path.exists(gprecoverseg_lock_dir) and self._isGprecoversegRunning():
             logger.info("----------------------------------------------------")
             logger.info("Segments in recovery")
             logSegments(segments_under_recovery, False, [VALUE_RECOVERY_TYPE, VALUE_RECOVERY_COMPLETED_BYTES, VALUE_RECOVERY_TOTAL_BYTES,
@@ -960,26 +960,12 @@ class GpSystemStateProgram:
         return 1 if hasWarnings else 0
 
     @staticmethod
-    def _isGprecoversegRunning(process):
+    def _isGprecoversegRunning():
         """
-        helper function for checking if gprecoverseg prcess is running
-        :param process: gprecoverseg
+        helper function for checking if gprecoverseg process is running
         returns true if gprecoverseg process-id matches the pid in the gprecoverseg.lock/PID file
         false otherwise
         """
-
-        if process != 'gprecoverseg':
-            return False
-
-        cmd = Command(name='pgrep -f for %s' % process,
-                      cmdStr="pgrep -f %s" % process)
-        cmd.run()
-        if cmd.get_return_code() > 1:
-            logger.warning("__isGprecoversegRunning: Unexpected problem with pgrep, return code: %s"
-                           % cmd.get_return_code())
-            return False
-
-        gprecoverseg_pid = cmd.get_stdout(True)
         pid_file_path = os.path.join(get_coordinatordatadir() + '/gprecoverseg.lock' + '/PID')
         if not os.path.exists(pid_file_path):
             return False
@@ -989,9 +975,16 @@ class GpSystemStateProgram:
         pid_file.close()
 
         # PID file in gprecoverseg.lock directory will contain the pid of the gprecoverseg process.
-        # Compare this pid with the pid of gprecoverseg obtained from pgrep.
-        # return true if both the pids match.
-        return gprecoverseg_pid == pid
+        # Check if a process corresponding to this is running using ps -p command .
+        # return true if ps -p succeeds.
+        cmd = Command(name='ps -p for %s' % pid,
+                      cmdStr="ps -p %d" % int(pid))
+        cmd.run()
+        if cmd.get_return_code() > 1:
+            logger.warning("_isGprecoversegRunning: Unexpected problem with ps, return code: %s"
+                           % cmd.get_return_code())
+            return False
+        return cmd.get_return_code() == 0
 
     @staticmethod
     def _parse_recovery_progress_data(data, recovery_progress_file, gpArray):
