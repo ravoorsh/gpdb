@@ -976,15 +976,15 @@ class GpSystemStateProgram:
 
         # PID file in gprecoverseg.lock directory will contain the pid of the gprecoverseg process.
         # Check if a process corresponding to this is running using ps -p command .
-        # return true if ps -p succeeds.
+        # return true if ps -p returns gprecoverseg process.
         cmd = Command(name='ps -p for %s' % pid,
-                      cmdStr="ps -p %d" % int(pid))
+                      cmdStr="ps -p %d | tail -1 | awk '{print $5}' | awk -F/ '{print $6}'" % int(pid))
         cmd.run()
         if cmd.get_return_code() > 1:
             logger.warning("_isGprecoversegRunning: Unexpected problem with ps, return code: %s"
                            % cmd.get_return_code())
             return False
-        return cmd.get_return_code() == 0
+        return cmd.get_stdout(True) == 'gprecoverseg'
 
     @staticmethod
     def _parse_recovery_progress_data(data, recovery_progress_file, gpArray):
