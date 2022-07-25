@@ -977,8 +977,8 @@ class GpSystemStateProgram:
         # PID file in gprecoverseg.lock directory will contain the pid of the gprecoverseg process.
         # Check if a process corresponding to this is running using ps -p command .
         # return true if ps -p returns gprecoverseg process.
-        cmd = Command(name='ps -p for %s' % pid,
-                      cmdStr="ps -p %d | tail -1 | awk '{print $5}' | awk -F/ '{print $6}'" % int(pid))
+        cmd = Command(name="ps aux | awk '$2 == %s  { print $0 }' | awk '{print $12}' | awk -F/ '{print $6}'" % pid,
+                      cmdStr="ps aux | awk '$2 == %d  { print $0 }' | awk '{print $12}' | awk -F/ '{print $6}'" % int(pid))
         cmd.run()
         if cmd.get_return_code() > 1:
             logger.warning("_isGprecoversegRunning: Unexpected problem with ps, return code: %s"
