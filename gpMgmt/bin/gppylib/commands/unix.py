@@ -105,6 +105,31 @@ def check_pid(pid):
     else:
         return True
 
+def check_postgres_process_remote(datadir, port, host, context):
+    logger.info('Terminating processes for segment %s' % datadir)
+
+    #pid_list = []
+
+    cmd = Command('get a list of postgres child processes',
+                  cmdStr='ps ux | grep "[p]ostgres:\s*%s" | awk \'{print $2}\'' % port, ctxt=context, remoteHost=host)
+
+    try:
+        cmd.run(validateAfter=True)
+    except Exception as e:
+        logger.warning('Unable to get the pid list of processes for segment %s: (%s)' % (datadir, str(e)))
+        return
+
+    results = cmd.get_results()
+    results = results.stdout.strip().split('\n')
+
+    if not results:
+        return True
+
+     #       pid_list.append(int(result))
+
+    #for pid in pid_list:
+     #   if not check_pid_on_remotehost(pid, host):
+      #      return False
 
 """
 Given the data directory, port and pid for a segment, 
@@ -118,31 +143,31 @@ E.g postgres:  45002, logger process
 """
 
 
-def kill_9_segment_processes(datadir, port, pid):
+def kill_9_segment_processes(datadir, pid_list):
     logger.info('Terminating processes for segment %s' % datadir)
 
-    pid_list = []
+    #pid_list = []
 
     # pid is the pid of the postgres process.
     # pid can be -1 if the process is down already
-    if pid != -1:
-        pid_list = [pid]
+    #if pid != -1:
+        #pid_list = [pid]
 
-    cmd = Command('get a list of processes to kill -9',
-                  cmdStr='ps ux | grep "[p]ostgres:\s*%s" | awk \'{print $2}\'' % (port))
+    #cmd = Command('get a list of processes to kill -9',
+                 # cmdStr='ps ux | grep "[p]ostgres:\s*%s" | awk \'{print $2}\'' % (port))
 
-    try:
-        cmd.run(validateAfter=True)
-    except Exception as e:
-        logger.warning('Unable to get the pid list of processes for segment %s: (%s)' % (datadir, str(e)))
-        return
+    #try:
+        #cmd.run(validateAfter=True)
+    #except Exception as e:
+        #logger.warning('Unable to get the pid list of processes for segment %s: (%s)' % (datadir, str(e)))
+        #return
 
-    results = cmd.get_results()
-    results = results.stdout.strip().split('\n')
+    #results = cmd.get_results()
+    #results = results.stdout.strip().split('\n')
 
-    for result in results:
-        if result:
-            pid_list.append(int(result))
+    #for result in results:
+        #if result:
+            #pid_list.append(int(result))
 
     for pid in pid_list:
         # Try to kill -9 the process.
@@ -150,6 +175,7 @@ def kill_9_segment_processes(datadir, port, pid):
         try:
             os.kill(pid, signal.SIGKILL)
         except Exception as e:
+            #logger.error("Printing message from kill_9_segment_processes")
             logger.error('Failed to kill processes for segment %s: (%s)' % (datadir, str(e)))
 
 

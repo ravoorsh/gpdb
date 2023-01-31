@@ -1,8 +1,11 @@
 import os
+from unittest import mock
 
 from mock import patch
 
 from commands.unix import RemoveFile, RemoveDirectory, RemoveDirectoryContents, RemoveGlob, REMOTE, Command
+
+from bin.gppylib.commands.unix import check_postgres_process_remote, kill_9_segment_processes
 from .gp_unittest import *
 
 
@@ -86,6 +89,38 @@ class CommandsUnix(GpTestCase):
         RemoveGlob.local("testing", "/doesnotexist")
         self.assertTrue(os.path.exists(self.filepath))
         self.assertTrue(os.path.exists(self.dir))
+
+    @mock.patch('gppylib.commands.base.Command.run', return_value=False)
+    def test_check_postgres_process_remote_command_fails(self, mock1):
+        expected = "Unable to get the pid list of processes for segment"
+        actual = check_postgres_process_remote("/tmp", 1234, "localhost", "LOCAL")
+        self.assertIn(expected, actual)
+
+    @mock.patch('gppylib.commands.base.Command.run')
+    @mock.patch('gppylib.commands.base.Command.get_results', read_data=0)
+    def test_check_postgres_process_remote_succeeds(self, mock1, mock2):
+        expected = True
+        actual = check_postgres_process_remote("/tmp", 1234, "localhost", "LOCAL")
+        self.assertEqual(expected, actual)
+
+    @mock.patch('gppylib.commands.base.Command.run')
+    @mock.patch('gppylib.commands.base.Command.get_results', read_data='1234,1235')
+    def test_check_postgres_process_remote_fails(self, mock1, mock2):
+        expected = None
+        actual = check_postgres_process_remote("/tmp", 1234, "localhost", "LOCAL")
+        self.assertEqual(expected, actual)
+
+    @mock.patch('os.kill', return_value=0)
+    def test_kill_9_segment_processes_kill_succeeds(self, mock1):
+        expected = None
+        actual = kill_9_segment_processes('/tmp', '123, 456, 789')
+        self.assertEqual(expected, actual)
+
+    @mock.patch('os.kill', return_value=1)
+    def test_kill_9_segment_processes_kill_fails(self, mock1):
+        expected = "Failed to kill processes for segment"
+        actual = kill_9_segment_processes('/tmp', '123, 456, 789')
+        self.assertIn(expected, actual)
 
     # Note: remote tests use ssh to localhost, which is not really something that should be done in a true unit test.
     # we leave them here, commented out, for development usage only.

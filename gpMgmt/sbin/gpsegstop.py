@@ -69,7 +69,7 @@ class SegStop(base.Command):
     def run(self):
         try:
             self.datadir, self.port = self.get_datadir_and_port()
-
+            print("Calling Segment Stop")
             cmd = gp.SegmentStop('segment shutdown', self.datadir, mode=self.mode, timeout=self.timeout)
             cmd.run()
 
@@ -91,12 +91,20 @@ class SegStop(base.Command):
                     self.result = status
                     is_shutdown = True
 
+            children_pids = []
             # read pid and datadir from /tmp/.s.PGSQL.<port>.lock file
             name = "failed segment '%s'" % self.db
             (succeeded, mypid, file_datadir) = pg.ReadPostmasterTempFile.local(name, self.port).getResults()
-
+            print("mypid %d file_datadir %s self.datadir %s, mypid,file_datadir", self.datadir)
+            
             if not is_shutdown:
+                self.logger.info("Reached the if not shutdown loop")
                 if succeeded and file_datadir == self.datadir:
+                    # get child pids before parent process is killed.
+                    if unix.check_pid(mypid) and mypid != -1:
+                        children_pids = unix.getDescendentProcesses(mypid)
+                        for child in children_pids:
+                            self.logger.info("process: %d", child)
 
                     # now try to terminate the process, first trying with
                     # SIGTERM and working our way up to SIGABRT sleeping
@@ -114,10 +122,10 @@ class SegStop(base.Command):
                                        "Forceful termination success: rc: %d stdout: %s stderr: %s." % (
                                        results.rc, results.stdout, results.stderr))
 
-            try:
-                unix.kill_9_segment_processes(self.datadir, self.port, mypid)
+                    try:
+                         unix.kill_9_segment_processes(self.datadir, children_pids)
 
-                if unix.check_pid(mypid) and mypid != -1:
+              if unix.check_pid(mypid) and mypid != -1:
                     status = SegStopStatus(self.datadir, False,
                                            "Failed forceful termnation: rc: %d stdout: %s stderr: %s." % (
                                            results.rc, results.stdout, results.stderr))

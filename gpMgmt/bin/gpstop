@@ -418,7 +418,7 @@ class GpStop:
 
         e = GpEraFile(self.coordinator_datadir, logger=get_logger_if_verbose())
         e.end_era()
-
+        children_pids = []
         try:
             if self.mode == 'smart':
                 self._stop_coordinator_smart()
@@ -432,6 +432,14 @@ class GpStop:
             (succeeded, mypid, file_datadir) = pg.ReadPostmasterTempFile.local("Read coordinator tmp file",
                                                                                self.dburl.pgport).getResults()
             if succeeded and file_datadir == self.coordinator_datadir:
+                # get the child pids before the parent process is killed
+                logger.debug("Getting the child pids for %d", mypid)
+                if unix.check_pid(mypid) and mypid != -1:
+                     children_pids = unix.getDescendentProcesses(mypid)
+
+                for pid in children_pids:
+                    logger.debug("Child pid %d", pid)
+
                 if unix.check_pid(mypid):
                     logger.info("Failed to shutdown coordinator with pg_ctl.")
                     logger.info("Sending SIGQUIT signal...")
@@ -453,7 +461,8 @@ class GpStop:
         logger.info('Attempting forceful termination of any leftover coordinator process')
         (succeeded, mypid, file_datadir) = pg.ReadPostmasterTempFile.local("Read coordinator tmp file",
                                                                            self.dburl.pgport).getResults()
-        unix.kill_9_segment_processes(self.coordinator_datadir, self.dburl.pgport, mypid)
+        unix.kill_9_segment_processes(self.coordinator_datadir, children_pids)
+
 
         logger.debug("Successfully shutdown the Coordinator instance in admin mode")
 
@@ -499,11 +508,15 @@ class GpStop:
                     return True
                 else:
                     logger.error('Failed to stop standby. Attempting forceful termination of standby process')
-                    (succeeded, mypid, file_datadir) = pg.ReadPostmasterTempFile.remote("Read standby tmp file",
+                    (succeeded, gpMgmt/test/behave/mgmt_utils/steps/mgmt_utils.py, file_datadir) = pg.ReadPostmasterTempFile.remote("Read standby tmp file",
                                                                                         self.dburl.pgport,
                                                                                         standby.hostname).getResults()
-                    unix.kill_9_segment_processes(self.coordinator_datadir, self.dburl.pgport, mypid)
-                    if not pg.DbStatus.remote('checking status of standby coordinator instance', standby, standby.hostname):
+                    if unix.check_pid(mypid) and mypid != -1:
+                         children_pids = unix.getDescendentProcesses(mypid)
+
+                    unix.kill_9_segment_processes(self.coordinator_datadir, children_pids)
+                    if not pg.DbStatus.remote('checking status of standby coordinator instance', standby,
+                                              standby.hostname):
                         logger.info("Successfully shutdown coordinator standby process on %s" % standby.hostname)
                         return True
                     else:

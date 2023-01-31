@@ -3762,3 +3762,23 @@ def impl(context, args):
 def impl(context):
     locale = get_en_utf_locale()
     context.execute_steps('''When a demo cluster is created using gpinitsystem args "--lc-ctype=%s"''' % locale)
+
+@then("all postgres processes are killed on all host")
+def step_impl(context):
+    def step_impl(context):
+        gparray = GpArray.initFromCatalog(dbconn.DbURL())
+        segments = gparray.getDbList()
+
+        for seg in segments:
+            host = seg.getSegmentHostName()
+            port = seg.getSegmentPort()
+            dataDir = seg.getSegmentDataDirectory()
+
+            if seg.isSegmentUp():
+                if seg.isSegmentCoordinator:
+                    result = unix.check_postgres_process_remote(dataDir, port, host, LOCAL)
+                else:
+                    result = unix.check_postgres_process_remote(dataDir, port, host, REMOTE)
+                if not result:
+                    raise Exception("gpstop failed to stop processes on host %s, port %s, datadir %s", host, port,
+                                    dataDir)
