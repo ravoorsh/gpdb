@@ -11,4 +11,5 @@ const (
 	MaxRetries         = 10
 	PlatformDarwin     = "darwin"
 	PlatformLinux      = "linux"
+	ROLE_PRIMARY       = "p"
 )
