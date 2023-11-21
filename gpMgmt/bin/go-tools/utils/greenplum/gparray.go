@@ -37,79 +37,35 @@ func NewGpArray() *GpArray {
 	return &GpArray{}
 }
 
-//func main() {
-//
-//	primarys := []Segment{
-//		{
-//			port:          8002,
-//			dataDirectory: "/Users/ravoorsh/workspace/gpdb/gpAux/gpdemo/datadirs/dbfast8/demoDataDir8",
-//			hostName:      "ravoorsh3MD6R.vmware.com",
-//			hostAddress:   "ravoorsh3MD6R.vmware.com",
-//		},
-//		{
-//			port:          8003,
-//			dataDirectory: "/Users/ravoorsh/workspace/gpdb/gpAux/gpdemo/datadirs/dbfast9/demoDataDir9",
-//			hostName:      "ravoorsh3MD6R.vmware.com",
-//			hostAddress:   "ravoorsh3MD6R.vmware.com",
-//		},
-//		{
-//			port:          8004,
-//			dataDirectory: "/Users/ravoorsh/workspace/gpdb/gpAux/gpdemo/datadirs/dbfast10/demoDataDir10",
-//			hostName:      "ravoorsh3MD6R.vmware.com",
-//			hostAddress:   "ravoorsh3MD6R.vmware.com",
-//		},
-//	}
-//
-//	err = nil
-//	err = Segment.RegisterSegments(primarys)
-//	if err != nil {
-//		fmt.Println("Unable to register primaries to Segment")
-//	}
-//
-//	GPArray, err = Segment.ReadGpSegmentConfig()
-//	if err != nil {
-//		fmt.Println("Unable to get data from gp_segment_configuration")
-//	}
-//
-//	fmt.Println(len(GPArray))
-//	fmt.Println(GPArray)
-//
-//	gpPrimary, err := GetPrimarySegments(GPArray)
-//	if err != nil {
-//		fmt.Println("Unable to get data from gp_segment")
-//	}
-//
-//	fmt.Println(gpPrimary)
-//}
-
-func (gpArray *GpArray) ReadGpSegmentConfig(host string, port int) error {
-	// Returns the contents of gp_segment_configuration table
-	user, _ := utils.System.CurrentUser()
-	conn := dbconn.NewDBConn("postgres", user.Username, host, port)
-	defer conn.Close()
-
-	conerr := conn.Connect(1, true)
-	if conerr != nil {
-		fmt.Println("Connection failed")
-		return conerr
+func ConnectDatabase(host string, port int) (*dbconn.DBConn, error) {
+	user, err := utils.System.CurrentUser()
+	if err != nil {
+		return nil, err
 	}
+	conn := dbconn.NewDBConn("template1", user.Username, host, port)
+	err = conn.Connect(1, true)
+	if err != nil {
+		return nil, err
+	}
+
+	return conn, nil
+}
+
+func (gpArray *GpArray) ReadGpSegmentConfig(conn *dbconn.DBConn) error {
+	// Returns the contents of gp_segment_configuration table
 
 	query := "select dbid, content, role, preferred_role, mode, status, port, datadir, hostname, address " +
 		"from pg_catalog.gp_segment_configuration  order by content asc, role desc;"
 	rows, err := conn.Query(query)
 	defer rows.Close()
 
-	if err != nil {
-		return err
-	}
-
 	result, err := buildGpArray(rows)
-	if err != nil {
+	if len(result) == 0 {
+		fmt.Println("Empty gp_segment_configuration")
 		return err
 	}
 
 	gpArray.Segments = result
-
 	return nil
 }
 
@@ -152,16 +108,7 @@ func (gpArray *GpArray) GetPrimarySegments() ([]Segment, error) {
 	return result, nil
 }
 
-func RegisterPrimaries(segs []*idl.Segment, host string, port int) error {
-	user, _ := utils.System.CurrentUser()
-	conn := dbconn.NewDBConn("template1", user.Username, host, port)
-	defer conn.Close()
-
-	conerr := conn.Connect(1, true)
-	if conerr != nil {
-		fmt.Println("Connection failed")
-		return nil
-	}
+func RegisterPrimaries(segs []*idl.Segment, conn *dbconn.DBConn) error {
 
 	addPrimaryQuery := "SELECT pg_catalog.gp_add_segment_primary( '%s', '%s', %d, '%s');"
 	for _, seg := range segs {
@@ -185,16 +132,7 @@ func RegisterPrimaries(segs []*idl.Segment, host string, port int) error {
 	return nil
 }
 
-func RegisterCoordinator(seg *idl.Segment) error {
-	user, _ := utils.System.CurrentUser()
-	conn := dbconn.NewDBConn("template1", user.Username, seg.HostName, int(seg.Port))
-	defer conn.Close()
-
-	conerr := conn.Connect(1, true)
-	if conerr != nil {
-		fmt.Println("Connection failed")
-		return nil
-	}
+func RegisterCoordinator(seg *idl.Segment, conn *dbconn.DBConn) error {
 
 	addCoordinatorQuery := "SELECT pg_catalog.gp_add_segment(1::int2, -1::int2, 'p', 'p', 's', 'u', '%d', '%s', '%s', '%s')"
 	_, err := conn.Exec(fmt.Sprintf(addCoordinatorQuery, int(seg.Port), seg.HostName, seg.HostAddress, seg.DataDirectory))

@@ -31,19 +31,25 @@ func (s *Server) MakeCluster(request *idl.MakeClusterRequest, stream idl.Hub_Mak
 	streamLogMsg(stream, "Successfully created coordinator segment")
 
 	streamLogMsg(stream, "Starting to register primary segments with the coordinator")
-	err = greenplum.RegisterCoordinator(request.GpArray.Coordinator)
+	conn, err := greenplum.ConnectDatabase(request.GpArray.Coordinator.HostName, int(request.GpArray.Coordinator.Port))
+	if err != nil {
+		return fmt.Errorf("error connecting to database : %v", err)
+	}
+	
+	defer conn.Close()
+	err = greenplum.RegisterCoordinator(request.GpArray.Coordinator, conn)
 	if err != nil {
 		return err
 	}
 
-	err = greenplum.RegisterPrimaries(request.GpArray.Primaries, request.GpArray.Coordinator.HostName, int(request.GpArray.Coordinator.Port))
+	err = greenplum.RegisterPrimaries(request.GpArray.Primaries, conn)
 	if err != nil {
 		return err
 	}
 	streamLogMsg(stream, "Successfully registered primary segments with the coordinator")
 
 	gpArray := greenplum.NewGpArray()
-	err = gpArray.ReadGpSegmentConfig(request.GpArray.Coordinator.HostName, int(request.GpArray.Coordinator.Port))
+	err = gpArray.ReadGpSegmentConfig(conn)
 	if err != nil {
 		return err
 	}
