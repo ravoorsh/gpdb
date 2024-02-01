@@ -1998,6 +1998,79 @@ def checkOrphanedToastTables():
                                description='Repairing orphaned TOAST tables')
 
 
+# Test to check if there are tables that use legacy opclass in distribution policy
+def checkMixDistPolicy() :
+    
+    #query to fetch all tables that use legacy opclass in distribution policy
+    qry = '''       
+        with legacy_opclass_oids(oid_array) as (
+          select
+            array_agg(oid)
+          from
+            pg_opclass
+          where
+            opcfamily in (
+                select
+                amprocfamily
+                from
+                pg_amproc
+                where
+                amproc :: oid in (
+                6140, 6141, 6142, 6143, 6144, 6145, 6146,
+                6147, 6148, 6149, 6150, 6151, 6152,
+                6153, 6154, 6155, 6156, 6157, 6158,
+                6159, 6160, 6161, 6162, 6163, 6164,
+                6165, 6166, 6167, 6168, 6170, 6169,
+                 6171
+                )            
+            )
+        )   
+    select
+        localoid :: regclass :: text 
+    from
+        gp_distribution_policy,
+        legacy_opclass_oids,
+        pg_class as pc
+    where
+        distclass :: oid[] && oid_array and pc.oid=localoid and pc.relispartition='f';
+   
+    '''
+    
+    try:
+        conn = connect2(GV.cfg[GV.coordinator_dbid])
+        with conn.cursor() as curs:
+            
+            curs.execute(qry)
+           
+            if curs.rowcount:
+                GV.checkStatus = False
+                myprint(
+                        '[ERROR]: Found tables that use legacy opclass in distribution policy.'
+                        ' Check the gpcheckcat log for details.'
+                    )
+                               
+                logger.error("Found %d tables that use legacy opclass in distribution policy" % curs.rowcount)
+
+                log_output = ['legacy_tables :']                                                   
+                log_output.append('.........................................................')
+		
+                #Output all the legacy tables to logfile                
+                for row in curs.fetchall():
+                    log_output.append(row[0])
+                
+                log_output = '\n'.join(log_output)
+                logger.error(log_output)     
+            else:
+                logger.info('[OK] No tables created using legacy opclass in distribution policy')
+    
+    except Exception as e:
+        setError(ERROR_NOREPAIR)
+        GV.checkStatus = False
+        myprint('[ERROR] executing test: checkMixDistPolicy')
+        myprint('  Execution error: ' + str(e))
+ 
+ 
+
 ############################################################################
 # Help populating repair part for all checked types
 # All functions dependent on results stored in global variable GV
@@ -2139,7 +2212,16 @@ all_checks = {
             "version": 'main',
             "order": 16,
             "online": False
+        },
+     "mix_distribution_policy":
+        {
+            "description": "Check for tables that use legacy opclass in distribution policy",
+            "fn": lambda: checkMixDistPolicy(),
+            "version": 'main',
+            "order": 17,
+            "online": True
         }
+
 }
 
 
