@@ -784,34 +784,41 @@ Feature: gpcheckcat tests
         Given database "hashops_db" is dropped and recreated
         And the user runs "psql hashops_db -f test/behave/mgmt_utils/steps/data/gpcheckcat/create_legacy_hash_ops_tables.sql"
         Then psql should return a return code of 0
-        When the user runs "gpcheckcat -R mix_distribution_policy hashops_db "
+        When the user runs "gpcheckcat -R legacy_distribution_policy hashops_db "
         And gpcheckcat should print "Found tables that use legacy opclass in distribution policy. Check the gpcheckcat log for details" to stdout
         Then gpcheckcat should print "Found 7 tables that use legacy opclass in distribution policy" to logfile with latest timestamp
-        Then gpcheckcat should print "legacy_tables" to logfile with latest timestamp
+        Then gpcheckcat should print "legacy table list" to logfile with latest timestamp
+        Then gpcheckcat should print "public.t_old" to logfile with latest timestamp
+        Then gpcheckcat should print "public.t1_old" to logfile with latest timestamp
+        Then gpcheckcat should print "public.rank_old" to logfile with latest timestamp
+        Then gpcheckcat should print "public.t_space" to logfile with latest timestamp
+        Then gpcheckcat should print "public.t_dot" to logfile with latest timestamp
+        Then gpcheckcat should print "public.t_dash" to logfile with latest timestamp
+        Then gpcheckcat should print "public.t_multispecial" to logfile with latest timestamp
         And the user runs "dropdb hashops_db"
 
      Scenario: gpcheckcat reports success when tables created using only non legacy opclass in distribution policy
         Given database "hashops_db" is dropped and recreated
         And the user runs "psql hashops_db -f test/behave/mgmt_utils/steps/data/gpcheckcat/create_non_legacy_hashops_tables.sql"
         Then psql should return a return code of 0
-        When the user runs "gpcheckcat -R mix_distribution_policy hashops_db "
+        When the user runs "gpcheckcat -R legacy_distribution_policy hashops_db "
         And gpcheckcat should print "PASSED" to stdout
         And the user runs "dropdb hashops_db"
 
-      Scenario: gpcheckcat reports failure and print tables created using only legacy opclass when mix distribution policy is present 
+     Scenario: gpcheckcat reports failure and print tables created using only legacy opclass when mix distribution policy is present
         Given database "hashops_db" is dropped and recreated
         And the user runs "psql hashops_db -f test/behave/mgmt_utils/steps/data/gpcheckcat/create_non_legacy_hashops_tables.sql"
         And the user runs "psql hashops_db -f test/behave/mgmt_utils/steps/data/gpcheckcat/create_legacy_hash_ops_tables.sql"
         Then psql should return a return code of 0
-        When the user runs "gpcheckcat -R mix_distribution_policy hashops_db "
+        When the user runs "gpcheckcat -R legacy_distribution_policy hashops_db "
         And gpcheckcat should print "Found tables that use legacy opclass in distribution policy. Check the gpcheckcat log for details" to stdout
-    	Then gpcheckcat should print "Found 7 tables that use legacy opclass in distribution policy" to logfile with latest timestamp
-        Then gpcheckcat should print "legacy_tables" to logfile with latest timestamp
+        Then gpcheckcat should print "Found 7 tables that use legacy opclass in distribution policy" to logfile with latest timestamp
+        Then gpcheckcat should print "legacy table list" to logfile with latest timestamp
         And the user runs "dropdb hashops_db"
 
-      Scenario: gpcheckcat -l should report mix_distribution_policy to stdout 
+      Scenario: gpcheckcat -l should report legacy_distribution_policy to stdout
         When the user runs "gpcheckcat -l "
-        And gpcheckcat should print "mix_distribution_policy" to stdout
+        And gpcheckcat should print "legacy_distribution_policy" to stdout
 
       Scenario: gpcheckcat report all tables created using legacy opclass on multiple database
         Given database "hashops_db" is dropped and recreated
@@ -819,11 +826,11 @@ Feature: gpcheckcat tests
         Then psql should return a return code of 0
         Given database "hashops_db2" is dropped and recreated
         And the user runs "psql hashops_db2 -f test/behave/mgmt_utils/steps/data/gpcheckcat/create_legacy_hash_ops_tables.sql"
-        Then psql should return a return code of 0 
-        When the user runs "gpcheckcat -A -R mix_distribution_policy"
+        Then psql should return a return code of 0
+        When the user runs "gpcheckcat -A -R legacy_distribution_policy"
         And gpcheckcat should print "Found tables that use legacy opclass in distribution policy. Check the gpcheckcat log for details" to stdout
         Then gpcheckcat should print "Found 7 tables that use legacy opclass in distribution policy" to logfile with latest timestamp
-        Then gpcheckcat should print "legacy_tables" to logfile with latest timestamp
+        Then gpcheckcat should print "legacy table list" to logfile with latest timestamp
         Then gpcheckcat should print "Completed 1 test(s) on database 'hashops_db'" to logfile with latest timestamp
         Then gpcheckcat should print "Completed 1 test(s) on database 'hashops_db2'" to logfile with latest timestamp
         And the user runs "dropdb hashops_db"

@@ -2714,7 +2714,7 @@ def impl(context, command, target):
             contents += line
     if target not in contents:
         raise Exception("cannot find %s in %s" % (target, filename))
-    
+
 @then('{command} should print "{target}" to logfile with latest timestamp')
 def impl(context, command, target):
     log_dir = _get_gpAdminLogs_directory()
