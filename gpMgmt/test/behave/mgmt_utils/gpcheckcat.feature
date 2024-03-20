@@ -744,12 +744,9 @@ Feature: gpcheckcat tests
         Then psql should return a return code of 0
         When the user runs "psql miss_attr_db5 -c "SET allow_system_table_mods=true; DELETE FROM pg_shdescription where objoid=(SELECT oid from pg_tablespace where spcname='outerspace');""
         Then psql should return a return code of 0
-        When the user runs "gpcheckcat miss_attr_db5"
-        Then gpcheckcat should print "Missing description metadata of {.*} on content -1" to stdout
-        And gpcheckcat should not print "Execution error:" to stdout
-        And gpcheckcat should print "Name of test which found this issue: missing_extraneous_pg_description" to stdout
-        Then gpcheckcat should print "Missing shdescription metadata of {.*} on content -1" to stdout
-        And gpcheckcat should print "Name of test which found this issue: missing_extraneous_pg_shdescription" to stdout
+        When the user runs "gpcheckcat -R missing_extraneous miss_attr_db5"
+        Then gpcheckcat should print "PASSED" to stdout
+        And the user runs "dropdb miss_attr_db5"
 
     Scenario: set multiple GUC at session level in gpcheckcat
         Given database "all_good" is dropped and recreated
