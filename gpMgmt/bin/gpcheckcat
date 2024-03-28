@@ -46,6 +46,7 @@ except ImportError as e:
     sys.exit('Error: unable to import module: ' + str(e))
 
 # cache OID -> object name cache
+#Test comment
 oidmap = {}
 
 # -------------------------------------------------------------------------------
