@@ -118,11 +118,12 @@ func RunInitClusterCmd(cmd *cobra.Command, args []string) error {
 		if len(args) == 1 {
 			return fmt.Errorf("cannot provide config file with --clean flag")
 		}
+		if cliCleanFlag && cliForceFlag {
+			return fmt.Errorf("cannot use clean and force flag")
+		}
 		return InitCleanFn(Verbose)
 	}
-	if cliCleanFlag && cliForceFlag {
-		return fmt.Errorf("cannot use clean and force flag")
-	}
+
 	// initial basic cli validations
 	if len(args) == 0 {
 		return fmt.Errorf("please provide config file for cluster initialization")

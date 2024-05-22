@@ -259,6 +259,42 @@ func runCmd(cmd Command) (CmdResult, error) {
 	return result, err
 }
 
+func runCmdWithUserInput(cmd Command, userinput string) (CmdResult, error) {
+	var cmdObj *exec.Cmd
+	if cmd.host == "" || cmd.host == DefaultHost {
+		cmdObj = exec.Command(cmd.cmdStr, cmd.args...)
+	} else {
+		subCmd := exec.Command(cmd.cmdStr, cmd.args...)
+		cmdObj = exec.Command("ssh", cmd.host, subCmd.String())
+	}
+
+	stdin, _ := cmdObj.StdinPipe()
+	go func() {
+		defer stdin.Close()
+		_, err := io.WriteString(stdin, userinput)
+		if err != nil {
+			return
+		}
+	}()
+
+	out, err := cmdObj.CombinedOutput()
+	result := CmdResult{
+		OutputMsg: string(out),
+		ExitCode:  cmdObj.ProcessState.ExitCode(),
+	}
+
+	return result, err
+}
+
+func RunInitClusterwithUserInput(userinput string, params ...string) (CmdResult, error) {
+	params = append([]string{"init", "cluster"}, params...)
+	genCmd := Command{
+		cmdStr: constants.DefaultServiceName,
+		args:   params,
+	}
+	return runCmdWithUserInput(genCmd, userinput)
+}
+
 func GetServiceDetails(p utils.Platform) (string, string, string) {
 	serviceDir := fmt.Sprintf(p.GetDefaultServiceDir(), os.Getenv("USER"))
 	serviceExt := p.(utils.GpPlatform).ServiceExt
@@ -416,4 +452,46 @@ func GetHostListFromFile(hostfile string) []string {
 func GetTempFile(t *testing.T, name string) string {
 	dir := t.TempDir()
 	return filepath.Join(dir, name)
+}
+
+func CheckifClusterisRunning(hostlist []string) (CmdResult, error) {
+
+	var result CmdResult
+	var err error
+	cmdStr := "/bin/bash -c 'ps -ef | grep postgres | wc -l'"
+
+	for _, hostname := range hostlist {
+		genCmd := Command{
+			cmdStr: cmdStr,
+			host:   hostname,
+		}
+		result, err := runCmd(genCmd)
+
+		if result.ExitCode != 0 && strings.TrimSpace(result.OutputMsg) != "2" {
+			return result, err
+		}
+
+	}
+
+	return result, err
+}
+
+func CheckifdataDirIsEmpty(hostmap map[string][]string) (CmdResult, error) {
+
+	var result CmdResult
+	var err error
+	for hostname, datadirs := range hostmap {
+		for _, dir := range datadirs {
+			cmdStr := fmt.Sprintf("/bin/bash -c 'ls -l %s | wc -l'", dir)
+			genCmd := Command{
+				cmdStr: cmdStr,
+				host:   hostname,
+			}
+			result, err = runCmd(genCmd)
+			if result.ExitCode != 0 && strings.TrimSpace(result.OutputMsg) != "1" {
+				return result, err
+			}
+		}
+	}
+	return result, err
 }
